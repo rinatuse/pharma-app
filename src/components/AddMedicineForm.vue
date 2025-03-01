@@ -60,7 +60,7 @@ const loading = computed(() => medicinesStore.loading)
 const error = computed(() => medicinesStore.error)
 
 const submitForm = async () => {
-    await medicinesStore.addMadicine({
+    await medicinesStore.addMedicine({
         name: medicine.value.name,
         description: medicine.value.description,
         dosage: medicine.value.dosage,
