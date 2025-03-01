@@ -1,53 +1,72 @@
 <template>
-    <div class="add-machine">
+    <div class="add-medicine">
         <h2>Добавить новое лекарство</h2>
 
         <form @submit.prevent="submitForm">
             <div class="form-field">
                 <span class="p-float-label">
+                    <InputText id="name" v-model="medicine.name" :disabled="medicinesStore.loading" required />
                     <label for="name">Название</label>
-                    <InputText id="name" v-model="medicine.name" :disabled="loading" required />
                 </span>
             </div>
 
             <div class="form-field">
                 <span class="p-float-label">
+                    <InputText id="description" v-model="medicine.description" :disabled="medicinesStore.loading" required />
                     <label for="description">Описание</label>
-                    <InputText id="description" v-model="medicine.description" :disabled="loading" required />
                 </span>
             </div>
 
             <div class="form-field">
                 <span class="p-float-label">
+                    <InputText id="dosage" v-model="medicine.dosage" :disabled="medicinesStore.loading" required />
                     <label for="dosage">Дозировка</label>
-                    <InputText id="dosage" v-model="medicine.dosage" :disabled="loading" required />
                 </span>
             </div>
 
             <div class="form-field">
                 <span class="p-float-label">
+                    <InputText id="sideEffects" v-model="medicine.sideEffects" :disabled="medicinesStore.loading" />
                     <label for="sideEffects">Побочные эффекты</label>
-                    <InputText id="sideEffects" v-model="medicine.sideEffects" :disabled="loading" required />
                 </span>
             </div>
 
-           <Button type="submit" label="Добавить" :loading="loading" />
+           <Button type="submit" label="Добавить" :loading="medicinesStore.loading" />
         </form>
 
-        <Message v-if="error" severity="error">{{ error }}</Message>
+        <div v-if="medicinesStore.error" class="error-message">
+            <i class="pi pi-exclamation-triangle"></i> {{ medicinesStore.error }}
+        </div>
+        
+        <div v-if="successMessage" class="success-message">
+            <i class="pi pi-check-circle"></i> {{ successMessage }}
+        </div>
     </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, watch, onMounted } from 'vue'
 import { useMedicinesStore } from '../stores/medicines'
 import InputText from 'primevue/inputtext'
-import Textarea from 'primevue/textarea';
-import InputNumber from 'primevue/inputnumber';
-import Button from 'primevue/button';
-import Message from 'primevue/message';
+import Button from 'primevue/button'
 
-const medicinesStore = useMedicinesStore();
+const medicinesStore = useMedicinesStore()
+const successMessage = ref('');
+
+// Подписываемся на обновления, если форма загружается отдельно
+onMounted(() => {
+    // Если мы не подписаны на обновления, то подписываемся
+    medicinesStore.subscribeToMedicines();
+})
+
+// Очищаем сообщение об успехе через 3 секунды
+watch(successMessage, (newVal) => {
+    if (newVal) {
+        setTimeout(() => {
+            successMessage.value = '';
+        }, 3000);
+    }
+});
 
 const medicine = ref({
     name: '',
@@ -56,24 +75,28 @@ const medicine = ref({
     sideEffects: '',
 })
 
-const loading = computed(() => medicinesStore.loading)
-const error = computed(() => medicinesStore.error)
-
 const submitForm = async () => {
-    await medicinesStore.addMedicine({
-        name: medicine.value.name,
-        description: medicine.value.description,
-        dosage: medicine.value.dosage,
-        sideEffects: medicine.value.sideEffects, 
-    });
-
-    if (!error.value) {
-        medicine.value = {
-            name: '',
-            description: '',
-            dosage: '',
-            sideEffects: '',
+    try {
+        await medicinesStore.addMedicine({
+            name: medicine.value.name,
+            description: medicine.value.description,
+            dosage: medicine.value.dosage,
+            sideEffects: medicine.value.sideEffects, 
+        })
+        
+        // Если ошибок нет, очищаем форму и выводим сообщение об успехе
+        if (!medicinesStore.error) {
+            medicine.value = {
+                name: '',
+                description: '',
+                dosage: '',
+                sideEffects: '',
+            }
+            successMessage.value = 'Лекарство успешно добавлено!';
+            console.log('Форма успешно отправлена и очищена');
         }
+    } catch (error) {
+        console.error('Ошибка при отправке формы:', error);
     }
 }
 </script>
@@ -86,5 +109,27 @@ const submitForm = async () => {
 
 .form-field {
   margin-bottom: 20px;
+}
+
+.error-message {
+  margin: 20px 0;
+  padding: 15px;
+  background-color: #fff3f3;
+  border-radius: 4px;
+  color: #f44336;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.success-message {
+  margin: 20px 0;
+  padding: 15px;
+  background-color: #f0fff0;
+  border-radius: 4px;
+  color: #4caf50;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 </style>
