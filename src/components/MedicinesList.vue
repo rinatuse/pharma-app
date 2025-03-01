@@ -20,7 +20,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted } from 'vue';
+import { onMounted, onUnmounted } from 'vue';
 import { useMedicinesStore } from '../stores/medicines';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
@@ -29,13 +29,19 @@ import Button from 'primevue/button';
 const medicinesStore = useMedicinesStore();
 
 onMounted(() => {
-    medicinesStore.fetchMedicines();
+    medicinesStore.subscribeToMedicines();
+});
+
+// Важно отписаться при размонтировании компонента
+onUnmounted(() => {
+    medicinesStore.cancelSubscription();
 });
 
 const medicines = medicinesStore.medicines;
 const loading = medicinesStore.loading;
 
-const removeMedicine = (id: any) => {
+const removeMedicine = (id: Id<"medicines">) => {
+    console.log("Удаляем документ с ID:", id);
     medicinesStore.removeMedicine(id);
 }
 </script>

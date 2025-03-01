@@ -29,6 +29,11 @@ export const remove = mutation({
         id: v.id("medicines")
     },
     handler: async (ctx, args) => {
+        // Проверяем, существует ли документ перед удалением
+        const document = await ctx.db.get(args.id);
+        if (!document) {
+            throw new Error(`Документ с ID ${args.id} не существует`);
+        }
         return await ctx.db.delete(args.id);
     }
-})
+});
